@@ -1,6 +1,7 @@
 package cn.wode490390.nukkit.cmdblock;
 
 import cn.nukkit.Player;
+import cn.nukkit.Server;
 import cn.nukkit.block.Block;
 import cn.nukkit.block.BlockUnknown;
 import cn.nukkit.blockentity.BlockEntity;
@@ -11,13 +12,19 @@ import cn.nukkit.item.Item;
 import cn.nukkit.math.Vector3;
 import cn.nukkit.network.protocol.DataPacket;
 import cn.nukkit.network.protocol.ProtocolInfo;
+import cn.nukkit.plugin.JavaPluginLoader;
 import cn.nukkit.plugin.PluginBase;
+import cn.nukkit.plugin.PluginManager;
 import cn.wode490390.nukkit.cmdblock.block.*;
 import cn.wode490390.nukkit.cmdblock.blockentity.*;
+import cn.wode490390.nukkit.cmdblock.functionlib.MC;
 import cn.wode490390.nukkit.cmdblock.protocol.CommandBlockUpdatePacket;
 import cn.wode490390.nukkit.cmdblock.util.MetricsLite;
+import jdk.nashorn.api.scripting.NashornScriptEngine;
+import jdk.nashorn.api.scripting.NashornScriptEngineFactory;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
 
 public class CommandBlockPlugin extends PluginBase implements Listener {
 
@@ -26,6 +33,7 @@ public class CommandBlockPlugin extends PluginBase implements Listener {
     @Override
     public void onLoad() {
         INSTANCE = this;
+        proxyPluginManager();
     }
 
     @Override
@@ -36,11 +44,15 @@ public class CommandBlockPlugin extends PluginBase implements Listener {
 
         }
 
+        //packet
         this.getServer().getNetwork().registerPacket(ProtocolInfo.COMMAND_BLOCK_UPDATE_PACKET, CommandBlockUpdatePacket.class);
+        //block
         this.registerBlock(BlockId.COMMAND_BLOCK, BlockCommandBlock.class);
         this.registerBlock(BlockId.CHAIN_COMMAND_BLOCK, BlockCommandBlockChain.class);
         this.registerBlock(BlockId.REPEATING_COMMAND_BLOCK, BlockCommandBlockRepeating.class);
+        //blockentity
         BlockEntity.registerBlockEntity(BlockEntityId.COMMAND_BLOCK, BlockEntityCommandBlock.class);
+        //listener
         this.getServer().getPluginManager().registerEvents(this, this);
     }
 
@@ -100,6 +112,7 @@ public class CommandBlockPlugin extends PluginBase implements Listener {
                         BlockEntityCommandBlock commandBlock = (BlockEntityCommandBlock) blockEntity;
                         Block block = commandBlock.getLevelBlock();
 
+                        //change commandblock type
                         switch (pk.commandBlockMode) {
                             case ICommandBlock.MODE_REPEATING:
                                 if (block.getId() != BlockId.REPEATING_COMMAND_BLOCK) {
@@ -120,18 +133,19 @@ public class CommandBlockPlugin extends PluginBase implements Listener {
                                 break;
                         }
 
-                        int meta = block.getDamage();
                         boolean conditional = pk.isConditional;
-
-                        if (conditional) {
-                            if (meta < 8) {
-                                block.setDamage(meta + 8);
-                            }
-                        } else {
-                            if (meta > 8) {
-                                block.setDamage(meta - 8);
-                            }
-                        }
+//                        int meta = block.getDamage();
+//
+//                        if (conditional) {
+//                            if (meta < 8) {
+//                                block.setDamage(meta + 8);
+//                            }
+//                        } else {
+//                            if (meta > 8) {
+//                                block.setDamage(meta - 8);
+//                            }
+//                        }
+                        block.setPropertyValue(BlockCommandBlock.CONDITIONAL_BIT,conditional);
 
                         player.level.setBlock(commandBlock, block, true);
 
@@ -142,6 +156,7 @@ public class CommandBlockPlugin extends PluginBase implements Listener {
                         commandBlock.setTickDelay(pk.tickDelay);
                         commandBlock.setExecutingOnFirstTick(pk.executingOnFirstTick);
 
+                        //redstone mode / auto
                         boolean isRedstoneMode = pk.isRedstoneMode;
                         commandBlock.setAuto(!isRedstoneMode);
                         if (!isRedstoneMode && pk.commandBlockMode == ICommandBlock.MODE_NORMAL) {
@@ -163,5 +178,20 @@ public class CommandBlockPlugin extends PluginBase implements Listener {
 
     public static CommandBlockPlugin getInstance() {
         return INSTANCE;
+    }
+
+    private static void proxyPluginManager(){
+        ProxyPluginManager proxyPluginManager = new ProxyPluginManager(Server.getInstance().getPluginManager());
+
+        try{
+            Field field = Server.class.getDeclaredField("pluginManager");
+            field.setAccessible(true);
+
+            field.set(Server.getInstance(),proxyPluginManager);
+        } catch (NoSuchFieldException e) {
+            System.out.println(e.getMessage());
+        } catch (IllegalAccessException e) {
+            System.out.println(e.getMessage());
+        }
     }
 }

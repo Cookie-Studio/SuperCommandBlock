@@ -3,24 +3,21 @@ package cn.wode490390.nukkit.cmdblock.inventory;
 import cn.nukkit.Player;
 import cn.nukkit.entity.Entity;
 import cn.nukkit.event.inventory.InventoryOpenEvent;
-import cn.nukkit.inventory.Inventory;
-import cn.nukkit.inventory.InventoryHolder;
-import cn.nukkit.inventory.InventoryType;
+import cn.nukkit.inventory.*;
 import cn.nukkit.item.Item;
 import cn.nukkit.level.Position;
 import cn.nukkit.math.Vector3;
 import cn.nukkit.network.protocol.ContainerOpenPacket;
 import cn.wode490390.nukkit.cmdblock.blockentity.BlockEntityCommandBlock;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
+//implement the command block's ui
 public class CommandBlockInventory implements Inventory {
 
     protected final Position holder;
     protected final Set<Player> viewers;
+    private List<InventoryListener> listeners;
 
     public CommandBlockInventory(Position holder, Set<Player> viewers) {
         this.holder = holder;
@@ -231,6 +228,28 @@ public class CommandBlockInventory implements Inventory {
 
     @Override
     public void onSlotChange(int index, Item before, boolean send) {
+        if (this.listeners != null) {
+            for (InventoryListener listener : listeners) {
+                listener.onInventoryChanged(this, before, index);
+            }
+        }
+    }
 
+    @Deprecated
+    @Override
+    public void addListener(InventoryListener listener) {
+        if (this.listeners == null) {
+            this.listeners = new ArrayList<>();
+        }
+
+        this.listeners.add(listener);
+    }
+
+    @Deprecated
+    @Override
+    public void removeListener(InventoryListener listener) {
+        if (this.listeners != null) {
+            this.listeners.remove(listener);
+        }
     }
 }

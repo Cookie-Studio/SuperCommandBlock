@@ -5,12 +5,11 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>cn.wode490390.nukkit</groupId>
-    <artifactId>commandblock</artifactId>
+    <artifactId>SuperCommandBlock</artifactId>
     <packaging>jar</packaging>
     <version>1.0.0</version>
     <name>VanillaCommandBlock</name>
-    <description>VanillaCommandBlock plugin for Nukkit</description>
-    <url>http://wode490390.cn/</url>
+    <description>SuperCommandBlock plugin for Nukkit</description>
     <inceptionYear>2018</inceptionYear>
 
     <licenses>
@@ -21,30 +20,6 @@
         </license>
     </licenses>
 
-    <issueManagement>
-        <system>GitHub</system>
-        <url>https://github.com/wode490390/VanillaCommandBlock/issues</url>
-    </issueManagement>
-
-    <ciManagement>
-        <system>CircleCI</system>
-        <url>https://circleci.com/gh/wode490390/VanillaCommandBlock</url>
-    </ciManagement>
-
-    <scm>
-        <connection>scm:git:https://github.com/wode490390/VanillaCommandBlock.git</connection>
-        <developerConnection>scm:git:git@github.com:wode490390/VanillaCommandBlock.git</developerConnection>
-        <url>https://github.com/wode490390/VanillaCommandBlock</url>
-    </scm>
-
-    <distributionManagement>
-        <repository>
-            <id>github</id>
-            <name>github-releases</name>
-            <url>https://maven.pkg.github.com/wode490390/VanillaCommandBlock</url>
-        </repository>
-    </distributionManagement>
-
     <properties>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
@@ -53,23 +28,61 @@
 
     <repositories>
         <repository>
-            <id>nukkitx-repo</id>
-            <url>http://repo.nukkitx.com/main/</url>
+            <id>opencollab-repo-release</id>
+            <url>https://repo.opencollab.dev/maven-releases/</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+        <repository>
+            <id>opencollab-repo-snapshot</id>
+            <url>https://repo.opencollab.dev/maven-snapshots/</url>
+            <releases>
+                <enabled>false</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
         </repository>
     </repositories>
 
     <dependencies>
+<!--        <dependency>-->
+<!--            <groupId>cn.nukkit</groupId>-->
+<!--            <artifactId>nukkit</artifactId>-->
+<!--            <version>1.0-SNAPSHOT</version>-->
+<!--            <scope>provided</scope>-->
+<!--        </dependency>-->
+        <!-- Annotations -->
         <dependency>
-            <groupId>cn.nukkit</groupId>
-            <artifactId>nukkit</artifactId>
-            <version>1.0-SNAPSHOT</version>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>1.18.4</version>
             <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.powernukkit</groupId>
+            <artifactId>powernukkit</artifactId>
+            <version>1.5.2.1-PN</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>30.1-jre</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+            <version>2.4</version>
         </dependency>
     </dependencies>
 
     <build>
         <defaultGoal>clean package</defaultGoal>
-        <finalName>wodeVanillaCommandBlock-${project.version}</finalName>
+        <finalName>SuperCommandBlock-${project.version}</finalName>
         <resources>
             <resource>
                 <targetPath>.</targetPath>

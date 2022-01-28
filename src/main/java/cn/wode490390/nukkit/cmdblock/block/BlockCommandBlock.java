@@ -2,7 +2,9 @@ package cn.wode490390.nukkit.cmdblock.block;
 
 import cn.nukkit.Player;
 import cn.nukkit.block.Block;
+import cn.nukkit.block.BlockBedrock;
 import cn.nukkit.blockentity.BlockEntity;
+import cn.nukkit.blockproperty.*;
 import cn.nukkit.item.Item;
 import cn.nukkit.item.ItemBlock;
 import cn.nukkit.level.Level;
@@ -16,7 +18,13 @@ import cn.wode490390.nukkit.cmdblock.blockentity.BlockEntityId;
 
 import java.util.Map;
 
+import static cn.nukkit.blockproperty.CommonBlockProperties.FACING_DIRECTION;
+
 public class BlockCommandBlock extends BlockSolidMeta implements Faceable {
+
+    public static final BooleanBlockProperty CONDITIONAL_BIT = new BooleanBlockProperty("conditional_bit", false);
+
+    public static final BlockProperties PROPERTIES = new BlockProperties(CONDITIONAL_BIT,CommonBlockProperties.FACING_DIRECTION);
 
     public BlockCommandBlock() {
         this(0);
@@ -24,6 +32,11 @@ public class BlockCommandBlock extends BlockSolidMeta implements Faceable {
 
     public BlockCommandBlock(int meta) {
         super(meta);
+    }
+
+    @Override
+    public BlockProperties getProperties() {
+        return PROPERTIES;
     }
 
     @Override
@@ -68,7 +81,7 @@ public class BlockCommandBlock extends BlockSolidMeta implements Faceable {
 
     @Override
     public BlockFace getBlockFace() {
-        return BlockFace.fromIndex(this.getDamage() & 0x7);
+        return getPropertyValue(FACING_DIRECTION);
     }
 
     @Override
@@ -77,17 +90,17 @@ public class BlockCommandBlock extends BlockSolidMeta implements Faceable {
             if (Math.abs(player.getFloorX() - this.x) < 2 && Math.abs(player.getFloorZ() - this.z) < 2) {
                 double y = player.y + player.getEyeHeight();
                 if (y - this.y > 2) {
-                    this.setDamage(BlockFace.UP.getIndex());
+                    this.setPropertyValue(FACING_DIRECTION,BlockFace.UP);
                 } else if (this.y - y > 0) {
-                    this.setDamage(BlockFace.DOWN.getIndex());
+                    this.setPropertyValue(FACING_DIRECTION,BlockFace.DOWN);
                 } else {
-                    this.setDamage(player.getHorizontalFacing().getOpposite().getIndex());
+                    this.setPropertyValue(FACING_DIRECTION,player.getHorizontalFacing().getOpposite());
                 }
             } else {
-                this.setDamage(player.getHorizontalFacing().getOpposite().getIndex());
+                this.setPropertyValue(FACING_DIRECTION,player.getHorizontalFacing().getOpposite());
             }
         } else {
-            this.setDamage(0);
+            this.setPropertyValue(FACING_DIRECTION,BlockFace.DOWN);
         }
         this.getLevel().setBlock(block, this, true);
         this.createBlockEntity(item);
