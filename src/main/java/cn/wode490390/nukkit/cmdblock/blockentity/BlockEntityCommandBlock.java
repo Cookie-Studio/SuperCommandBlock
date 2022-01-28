@@ -5,6 +5,7 @@ import cn.nukkit.Server;
 import cn.nukkit.block.Block;
 import cn.nukkit.blockentity.BlockEntityNameable;
 import cn.nukkit.blockentity.BlockEntitySpawnable;
+import cn.nukkit.event.Event;
 import cn.nukkit.inventory.Inventory;
 import cn.nukkit.lang.TextContainer;
 import cn.nukkit.level.GameRule;
@@ -18,22 +19,34 @@ import cn.nukkit.permission.PermissionAttachment;
 import cn.nukkit.permission.PermissionAttachmentInfo;
 import cn.nukkit.plugin.Plugin;
 import cn.nukkit.utils.Faceable;
+import cn.wode490390.nukkit.cmdblock.CommandBlockPlugin;
 import cn.wode490390.nukkit.cmdblock.ICommandBlock;
 import cn.wode490390.nukkit.cmdblock.block.BlockCommandBlock;
 import cn.wode490390.nukkit.cmdblock.block.BlockCommandBlockChain;
 import cn.wode490390.nukkit.cmdblock.block.BlockId;
+import cn.wode490390.nukkit.cmdblock.functionlib.MC;
 import cn.wode490390.nukkit.cmdblock.inventory.CommandBlockInventory;
+import cn.wode490390.nukkit.cmdblock.util.ListenDefiner;
 import com.google.common.base.Strings;
 import com.google.common.collect.Sets;
+import jdk.nashorn.api.scripting.NashornScriptEngine;
+import jdk.nashorn.api.scripting.NashornScriptEngineFactory;
+import lombok.Getter;
 
+import javax.script.ScriptException;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+@Getter
 public class BlockEntityCommandBlock extends BlockEntitySpawnable implements ICommandBlock, BlockEntityNameable {
 
+    @Getter
+    protected static Map<BlockEntityCommandBlock,Map<String,String>> listenMap = new HashMap<>();
     protected boolean conditionalMode;
     protected boolean auto;
     protected String command;
+    protected boolean isScript;
     protected long lastExecution;
     protected boolean trackOutput;
     protected String lastOutput;
@@ -46,6 +59,8 @@ public class BlockEntityCommandBlock extends BlockEntitySpawnable implements ICo
     protected boolean powered;
     protected int tickDelay;
     protected boolean executingOnFirstTick; //TODO: ???
+    protected NashornScriptEngine scriptEngine;
+    protected NashornScriptEngineFactory scriptEngineFactory;
 
     protected PermissibleBase perm;
     protected final Set<Player> viewers = Sets.newHashSet();
@@ -59,6 +74,7 @@ public class BlockEntityCommandBlock extends BlockEntitySpawnable implements ICo
     protected void initBlockEntity() {
         this.perm = new PermissibleBase(this);
         this.currentTick = 0;
+        this.scriptEngineFactory = new NashornScriptEngineFactory();
 
         if (this.namedTag.contains(TAG_POWERED)) {
             this.powered = this.namedTag.getBoolean(TAG_POWERED);
@@ -79,9 +95,9 @@ public class BlockEntityCommandBlock extends BlockEntitySpawnable implements ICo
         }
 
         if (this.namedTag.contains(TAG_COMMAND)) {
-            this.command = this.namedTag.getString(TAG_COMMAND);
+            setCommand(this.namedTag.getString(TAG_COMMAND));
         } else {
-            this.command = null;
+            setCommand("");
         }
 
         if (this.namedTag.contains(TAG_LAST_EXECUTION)) {
@@ -271,7 +287,7 @@ public class BlockEntityCommandBlock extends BlockEntitySpawnable implements ICo
         if (this.getLastExecution() != this.getServer().getTick()) {
             this.setConditionMet();
             if (/*this.getLevel().getGameRules().getBoolean(GameRule.COMMAND_BLOCKS_ENABLED) &&*/ this.isConditionMet() && (this.isAuto() || this.isPowered())) {
-                String cmd = this.getCommand();
+                String cmd = ListenDefiner.clearDefinition(this.getCommand().replace("#js",""));
                 if (!Strings.isNullOrEmpty(cmd)) {
                     if (cmd.equalsIgnoreCase("Searge")) {
                         this.lastOutput = "#itzlipofutzli";
@@ -282,10 +298,31 @@ public class BlockEntityCommandBlock extends BlockEntitySpawnable implements ICo
                             cmd = cmd.substring(1);
                         }
 
-                        if (Server.getInstance().dispatchCommand(this, cmd)) {
-                            this.successCount = 1; //TODO: >1
-                        } else {
-                            this.successCount = 0;
+                        //run cmd
+                        if (isScript){
+                            Object result = null;
+                            try {
+                                result = scriptEngine.invokeFunction("cmd");
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                                CommandBlockPlugin.getInstance().getLogger().error("throw an exception when running script");
+                            }
+                            if (!(result instanceof Boolean)){
+                                this.successCount = 0;
+                            }else{
+                                if (((Boolean) result).booleanValue()){
+
+                                    this.successCount = 1; //TODO: >1
+                                }else{
+                                    this.successCount = 0;
+                                }
+                            }
+                        }else {
+                            if (Server.getInstance().dispatchCommand(this, cmd)) {
+                                this.successCount = 1; //TODO: >1
+                            } else {
+                                this.successCount = 0;
+                            }
                         }
                     }
 
@@ -331,6 +368,30 @@ public class BlockEntityCommandBlock extends BlockEntitySpawnable implements ICo
     @Override
     public void setCommand(String command) {
         this.command = command;
+        if (ListenDefiner.isExistDefinition(command)){
+            Map<String,String> arguments = ListenDefiner.getDefinedEvents(command);
+            listenMap.put(this,arguments);
+            command = ListenDefiner.clearDefinition(command);
+        }
+        if (command.contains("#js")) {
+            isScript = true;
+            command = command.replace("#js", "");
+            //init nashorn engine
+            scriptEngine = (NashornScriptEngine) scriptEngineFactory.getScriptEngine(new String[]{"-doe"}, this.getClass().getClassLoader(), str -> true);
+            initScriptEngine();
+            String script = "function cmd(){" + command + "}";
+            if (!listenMap.get(this).isEmpty()){
+                listenMap.get(this).forEach((k,v) -> scriptEngine.put(v,null));//define value
+            }
+            try {
+                scriptEngine.eval(script);
+            } catch (ScriptException e) {
+                e.printStackTrace();
+            }
+        }else{
+            isScript = false;
+
+        }
         this.successCount = 0;
 //        this.spawnToAll();
     }
@@ -586,5 +647,21 @@ public class BlockEntityCommandBlock extends BlockEntitySpawnable implements ICo
     @Override
     public Inventory getInventory() {
         return new CommandBlockInventory(this, this.viewers);
+    }
+
+    private void initScriptEngine(){
+        try {
+            //global value
+            scriptEngine.eval("var MC = Java.type('" + MC.class.getName() + "');");
+            scriptEngine.put("own",this);
+        }catch(Exception e){
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void onBreak() {
+        super.onBreak();
+        listenMap.remove(this);
     }
 }
