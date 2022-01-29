@@ -286,7 +286,7 @@ public class BlockEntityCommandBlock extends BlockEntitySpawnable implements ICo
     public boolean execute(int chain) {
         if (this.getLastExecution() != this.getServer().getTick()) {
             this.setConditionMet();
-            if (/*this.getLevel().getGameRules().getBoolean(GameRule.COMMAND_BLOCKS_ENABLED) &&*/ this.isConditionMet() && (this.isAuto() || this.isPowered())) {
+            if (this.isConditionMet() && (this.isAuto() || this.isPowered())) {
                 String cmd = ListenDefiner.clearDefinition(this.getCommand().replace("#js",""));
                 if (!Strings.isNullOrEmpty(cmd)) {
                     if (cmd.equalsIgnoreCase("Searge")) {
@@ -379,10 +379,10 @@ public class BlockEntityCommandBlock extends BlockEntitySpawnable implements ICo
             //init nashorn engine
             scriptEngine = (NashornScriptEngine) scriptEngineFactory.getScriptEngine(new String[]{"-doe"}, this.getClass().getClassLoader(), str -> true);
             initScriptEngine();
-            String script = "function cmd(){" + command + "}";
-            if (!listenMap.get(this).isEmpty()){
+            if (listenMap.containsKey(this) && !listenMap.get(this).isEmpty()){
                 listenMap.get(this).forEach((k,v) -> scriptEngine.put(v,null));//define value
             }
+            String script = "function cmd(){" + command + "}";
             try {
                 scriptEngine.eval(script);
             } catch (ScriptException e) {
@@ -390,7 +390,6 @@ public class BlockEntityCommandBlock extends BlockEntitySpawnable implements ICo
             }
         }else{
             isScript = false;
-
         }
         this.successCount = 0;
 //        this.spawnToAll();
@@ -653,7 +652,7 @@ public class BlockEntityCommandBlock extends BlockEntitySpawnable implements ICo
         try {
             //global value
             scriptEngine.eval("var MC = Java.type('" + MC.class.getName() + "');");
-            scriptEngine.put("own",this);
+            scriptEngine.put("self",this);
         }catch(Exception e){
             e.printStackTrace();
         }

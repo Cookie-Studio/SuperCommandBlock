@@ -38,11 +38,11 @@ public class CommandBlockPlugin extends PluginBase implements Listener {
 
     @Override
     public void onEnable() {
-        try {
-            new MetricsLite(this, 6923);
-        } catch (Throwable ignore) {
-
-        }
+//        try {
+//            new MetricsLite(this, 6923);
+//        } catch (Throwable ignore) {
+//
+//        }
 
         //packet
         this.getServer().getNetwork().registerPacket(ProtocolInfo.COMMAND_BLOCK_UPDATE_PACKET, CommandBlockUpdatePacket.class);
