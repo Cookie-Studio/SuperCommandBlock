@@ -1,7 +1,7 @@
 main: cn.wode490390.nukkit.cmdblock.CommandBlockPlugin
 name: "SuperCommandBlock"
 description: "SuperCommandBlock plugin for Nukkit"
-author: "daoge cmd"
+authors: ["daoge cmd","wode"]
 version: "${pom.version}"
 api: ["1.0.0"]
 load: STARTUP
