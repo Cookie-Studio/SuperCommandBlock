@@ -1,7 +1,7 @@
 # Super Command Block
 ![supercb_text](img/supercb_text.png)
 [![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](LICENSE)
-[![MCBBS](https://img.shields.io/badge/-minebbs-active)](//todo)
+[![MCBBS](https://img.shields.io/badge/-minebbs-active)](https://www.minebbs.com/resources/supercommandblock-javascript.3493/)
 
 ## 介绍
 此插件是基于 [VanillaCommandBlock](https://github.com/wode490390/VanillaCommandBlock) 的修改版本,添加了js运行支持和监听器支持,未来计划加入be所有原版命令
@@ -30,7 +30,9 @@
 //todo
 
 ## 下载
-//todo
+插件下载：[MineBBS](https://www.minebbs.com/resources/supercommandblock-javascript.3493/)
+
+命令方块换行材质包下载: 见项目的 /src/main/resources 目录
 
 ## 编译
 1. 将源码拉取下来
