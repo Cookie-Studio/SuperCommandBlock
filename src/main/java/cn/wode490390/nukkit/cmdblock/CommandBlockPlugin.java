@@ -43,7 +43,8 @@ public class CommandBlockPlugin extends PluginBase implements Listener {
 //        } catch (Throwable ignore) {
 //
 //        }
-
+        this.saveResource("命令方块换行材质包.mcpack");
+        this.getLogger().warning("§a建议您安装配套的命令方块换行材质包，方便写代码。材质包可在 §e/plugins/SuperCommandBlock/ §a目录找到");
         //packet
         this.getServer().getNetwork().registerPacket(ProtocolInfo.COMMAND_BLOCK_UPDATE_PACKET, CommandBlockUpdatePacket.class);
         //block

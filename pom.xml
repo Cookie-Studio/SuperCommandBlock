@@ -88,9 +88,6 @@
                 <targetPath>.</targetPath>
                 <filtering>true</filtering>
                 <directory>${basedir}/src/main/resources</directory>
-                <includes>
-                    <include>*.yml</include>
-                </includes>
             </resource>
         </resources>
         <plugins>
