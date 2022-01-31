@@ -3,6 +3,7 @@ package cn.wode490390.nukkit.cmdblock;
 import cn.nukkit.api.PowerNukkitDifference;
 import cn.nukkit.api.PowerNukkitOnly;
 import cn.nukkit.api.Since;
+import cn.nukkit.command.PluginCommand;
 import cn.nukkit.event.Event;
 import cn.nukkit.event.EventPriority;
 import cn.nukkit.event.Listener;
@@ -14,15 +15,16 @@ import cn.nukkit.plugin.PluginLoader;
 import cn.nukkit.plugin.PluginManager;
 import cn.nukkit.utils.PluginException;
 import cn.wode490390.nukkit.cmdblock.blockentity.BlockEntityCommandBlock;
+import cn.wode490390.nukkit.cmdblock.util.ReflectUtil;
 
 import javax.script.ScriptEngine;
 import java.io.File;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ProxyPluginManager extends PluginManager {
+
     private PluginManager pluginManager;
 
     public ProxyPluginManager(PluginManager pluginManager) {
@@ -31,11 +33,16 @@ public class ProxyPluginManager extends PluginManager {
     }
 
     @Override
+    public List<PluginCommand> parseYamlCommands(Plugin plugin) {
+        return (List<PluginCommand>)ReflectUtil.callUnaccessibleMethod(pluginManager,"parseYamlCommands",plugin);
+    }
+
+    @Override
     public void callEvent(Event event) {
         String eventName = event.getClass().getSimpleName();
-        for (BlockEntityCommandBlock cb : BlockEntityCommandBlock.getListenMap().keySet()){
+        for (BlockEntityCommandBlock cb : BlockEntityCommandBlock.getListenMap().keySet()) {
             ScriptEngine scriptEngine = cb.getScriptEngine();
-            BlockEntityCommandBlock.getListenMap().get(cb).forEach((k,v)-> {
+            BlockEntityCommandBlock.getListenMap().get(cb).forEach((k, v) -> {
                 if (eventName.equals(k)) {
                     scriptEngine.put(v, event);
                     cb.execute();

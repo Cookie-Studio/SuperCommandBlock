@@ -5,7 +5,6 @@ import cn.nukkit.Server;
 import cn.nukkit.block.Block;
 import cn.nukkit.blockentity.BlockEntityNameable;
 import cn.nukkit.blockentity.BlockEntitySpawnable;
-import cn.nukkit.event.Event;
 import cn.nukkit.inventory.Inventory;
 import cn.nukkit.lang.TextContainer;
 import cn.nukkit.level.GameRule;
@@ -24,7 +23,6 @@ import cn.wode490390.nukkit.cmdblock.ICommandBlock;
 import cn.wode490390.nukkit.cmdblock.block.BlockCommandBlock;
 import cn.wode490390.nukkit.cmdblock.block.BlockCommandBlockChain;
 import cn.wode490390.nukkit.cmdblock.block.BlockId;
-import cn.wode490390.nukkit.cmdblock.functionlib.MC;
 import cn.wode490390.nukkit.cmdblock.inventory.CommandBlockInventory;
 import cn.wode490390.nukkit.cmdblock.util.ListenDefiner;
 import com.google.common.base.Strings;
@@ -34,6 +32,9 @@ import jdk.nashorn.api.scripting.NashornScriptEngineFactory;
 import lombok.Getter;
 
 import javax.script.ScriptException;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -42,7 +43,17 @@ import java.util.Set;
 public class BlockEntityCommandBlock extends BlockEntitySpawnable implements ICommandBlock, BlockEntityNameable {
 
     @Getter
-    protected static Map<BlockEntityCommandBlock,Map<String,String>> listenMap = new HashMap<>();
+    protected static Map<BlockEntityCommandBlock, Map<String, String>> listenMap = new HashMap<>();
+    protected static String globalScript;
+
+    static {
+        try {
+            globalScript = new String(Files.readAllBytes(Paths.get(CommandBlockPlugin.getInstance().getDataFolder() + "/globalScript.js")));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     protected boolean conditionalMode;
     protected boolean auto;
     protected String command;
@@ -287,7 +298,7 @@ public class BlockEntityCommandBlock extends BlockEntitySpawnable implements ICo
         if (this.getLastExecution() != this.getServer().getTick()) {
             this.setConditionMet();
             if (this.isConditionMet() && (this.isAuto() || this.isPowered())) {
-                String cmd = ListenDefiner.clearDefinition(this.getCommand().replace("#js",""));
+                String cmd = ListenDefiner.clearDefinition(this.getCommand().replace("#js", ""));
                 if (!Strings.isNullOrEmpty(cmd)) {
                     if (cmd.equalsIgnoreCase("Searge")) {
                         this.lastOutput = "#itzlipofutzli";
@@ -299,7 +310,7 @@ public class BlockEntityCommandBlock extends BlockEntitySpawnable implements ICo
                         }
 
                         //run cmd
-                        if (isScript){
+                        if (isScript) {
                             Object result = null;
                             try {
                                 result = scriptEngine.invokeFunction("cmd");
@@ -307,17 +318,17 @@ public class BlockEntityCommandBlock extends BlockEntitySpawnable implements ICo
                                 e.printStackTrace();
                                 CommandBlockPlugin.getInstance().getLogger().error("throw an exception when running script");
                             }
-                            if (!(result instanceof Boolean)){
+                            if (!(result instanceof Boolean)) {
                                 this.successCount = 0;
-                            }else{
-                                if (((Boolean) result).booleanValue()){
+                            } else {
+                                if (((Boolean) result).booleanValue()) {
 
                                     this.successCount = 1; //TODO: >1
-                                }else{
+                                } else {
                                     this.successCount = 0;
                                 }
                             }
-                        }else {
+                        } else {
                             if (Server.getInstance().dispatchCommand(this, cmd)) {
                                 this.successCount = 1; //TODO: >1
                             } else {
@@ -368,9 +379,9 @@ public class BlockEntityCommandBlock extends BlockEntitySpawnable implements ICo
     @Override
     public void setCommand(String command) {
         this.command = command;
-        if (ListenDefiner.isExistDefinition(command)){
-            Map<String,String> arguments = ListenDefiner.getDefinedEvents(command);
-            listenMap.put(this,arguments);
+        if (ListenDefiner.isExistDefinition(command)) {
+            Map<String, String> arguments = ListenDefiner.getDefinedEvents(command);
+            listenMap.put(this, arguments);
             command = ListenDefiner.clearDefinition(command);
         }
         if (command.contains("#js")) {
@@ -379,8 +390,8 @@ public class BlockEntityCommandBlock extends BlockEntitySpawnable implements ICo
             //init nashorn engine
             scriptEngine = (NashornScriptEngine) scriptEngineFactory.getScriptEngine(new String[]{"-doe"}, this.getClass().getClassLoader(), str -> true);
             initScriptEngine();
-            if (listenMap.containsKey(this) && !listenMap.get(this).isEmpty()){
-                listenMap.get(this).forEach((k,v) -> scriptEngine.put(v,null));//define value
+            if (listenMap.containsKey(this) && !listenMap.get(this).isEmpty()) {
+                listenMap.get(this).forEach((k, v) -> scriptEngine.put(v, null));//define value
             }
             String script = "function cmd(){" + command + "}";
             try {
@@ -388,7 +399,7 @@ public class BlockEntityCommandBlock extends BlockEntitySpawnable implements ICo
             } catch (ScriptException e) {
                 e.printStackTrace();
             }
-        }else{
+        } else {
             isScript = false;
         }
         this.successCount = 0;
@@ -648,12 +659,12 @@ public class BlockEntityCommandBlock extends BlockEntitySpawnable implements ICo
         return new CommandBlockInventory(this, this.viewers);
     }
 
-    private void initScriptEngine(){
+    private void initScriptEngine() {
         try {
             //global value
-            scriptEngine.eval("var MC = Java.type('" + MC.class.getName() + "');");
-            scriptEngine.put("self",this);
-        }catch(Exception e){
+            scriptEngine.put("self", this);
+            scriptEngine.eval(globalScript);
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }

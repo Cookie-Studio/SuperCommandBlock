@@ -3,5 +3,5 @@ name: "SuperCommandBlock"
 description: "SuperCommandBlock plugin for Nukkit"
 authors: ["daoge cmd","wode"]
 version: "${pom.version}"
-api: ["1.0.0"]
+api: ["1.0.1"]
 load: STARTUP

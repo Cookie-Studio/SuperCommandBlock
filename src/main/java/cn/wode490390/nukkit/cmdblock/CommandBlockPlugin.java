@@ -12,16 +12,15 @@ import cn.nukkit.item.Item;
 import cn.nukkit.math.Vector3;
 import cn.nukkit.network.protocol.DataPacket;
 import cn.nukkit.network.protocol.ProtocolInfo;
-import cn.nukkit.plugin.JavaPluginLoader;
 import cn.nukkit.plugin.PluginBase;
-import cn.nukkit.plugin.PluginManager;
-import cn.wode490390.nukkit.cmdblock.block.*;
-import cn.wode490390.nukkit.cmdblock.blockentity.*;
-import cn.wode490390.nukkit.cmdblock.functionlib.MC;
+import cn.wode490390.nukkit.cmdblock.block.BlockCommandBlock;
+import cn.wode490390.nukkit.cmdblock.block.BlockCommandBlockChain;
+import cn.wode490390.nukkit.cmdblock.block.BlockCommandBlockRepeating;
+import cn.wode490390.nukkit.cmdblock.block.BlockId;
+import cn.wode490390.nukkit.cmdblock.blockentity.BlockEntityCommandBlock;
+import cn.wode490390.nukkit.cmdblock.blockentity.BlockEntityId;
+import cn.wode490390.nukkit.cmdblock.functionlib.Storage;
 import cn.wode490390.nukkit.cmdblock.protocol.CommandBlockUpdatePacket;
-import cn.wode490390.nukkit.cmdblock.util.MetricsLite;
-import jdk.nashorn.api.scripting.NashornScriptEngine;
-import jdk.nashorn.api.scripting.NashornScriptEngineFactory;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -44,7 +43,11 @@ public class CommandBlockPlugin extends PluginBase implements Listener {
 //
 //        }
         this.saveResource("命令方块换行材质包.mcpack");
+        this.saveResource("globalScript.js");
+        this.saveResource("storage.yml");
         this.getLogger().warning("§a建议您安装配套的命令方块换行材质包，方便写代码。材质包可在 §e/plugins/SuperCommandBlock/ §a目录找到");
+        //init storage
+        Storage.save();
         //packet
         this.getServer().getNetwork().registerPacket(ProtocolInfo.COMMAND_BLOCK_UPDATE_PACKET, CommandBlockUpdatePacket.class);
         //block
@@ -55,6 +58,11 @@ public class CommandBlockPlugin extends PluginBase implements Listener {
         BlockEntity.registerBlockEntity(BlockEntityId.COMMAND_BLOCK, BlockEntityCommandBlock.class);
         //listener
         this.getServer().getPluginManager().registerEvents(this, this);
+    }
+
+    @Override
+    public void onDisable() {
+        Storage.save();
     }
 
     private void registerBlock(int id, Class<? extends Block> clazz) {
@@ -146,7 +154,7 @@ public class CommandBlockPlugin extends PluginBase implements Listener {
 //                                block.setDamage(meta - 8);
 //                            }
 //                        }
-                        block.setPropertyValue(BlockCommandBlock.CONDITIONAL_BIT,conditional);
+                        block.setPropertyValue(BlockCommandBlock.CONDITIONAL_BIT, conditional);
 
                         player.level.setBlock(commandBlock, block, true);
 
@@ -181,14 +189,14 @@ public class CommandBlockPlugin extends PluginBase implements Listener {
         return INSTANCE;
     }
 
-    private static void proxyPluginManager(){
+    private static void proxyPluginManager() {
         ProxyPluginManager proxyPluginManager = new ProxyPluginManager(Server.getInstance().getPluginManager());
 
-        try{
+        try {
             Field field = Server.class.getDeclaredField("pluginManager");
             field.setAccessible(true);
 
-            field.set(Server.getInstance(),proxyPluginManager);
+            field.set(Server.getInstance(), proxyPluginManager);
         } catch (NoSuchFieldException e) {
             System.out.println(e.getMessage());
         } catch (IllegalAccessException e) {

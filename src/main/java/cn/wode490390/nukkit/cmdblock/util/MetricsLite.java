@@ -12,23 +12,13 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
 import javax.net.ssl.HttpsURLConnection;
-import java.io.BufferedReader;
-import java.io.ByteArrayOutputStream;
-import java.io.DataOutputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Modifier;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Timer;
-import java.util.TimerTask;
-import java.util.UUID;
+import java.util.*;
 import java.util.zip.GZIPOutputStream;
 
 /**
@@ -82,7 +72,7 @@ public class MetricsLite {
     /**
      * Class constructor.
      *
-     * @param plugin The plugin which stats should be submitted.
+     * @param plugin   The plugin which stats should be submitted.
      * @param pluginId The id of the plugin.
      *                 It can be found at <a href="https://bstats.org/what-is-my-plugin-id">What is my plugin id?</a>
      */
@@ -105,7 +95,7 @@ public class MetricsLite {
             try {
                 // Check the UUID
                 UUID.fromString(config.getString("serverUuid"));
-            } catch (Exception ignored){
+            } catch (Exception ignored) {
                 map.put("serverUuid", UUID.randomUUID().toString());
             }
         }
@@ -143,7 +133,8 @@ public class MetricsLite {
                     service.getField("B_STATS_VERSION"); // Our identifier :)
                     found = true; // We aren't the first
                     break;
-                } catch (NoSuchFieldException ignored) { }
+                } catch (NoSuchFieldException ignored) {
+                }
             }
             // Register our service
             Server.getInstance().getServiceManager().register(MetricsLite.class, this, plugin, ServicePriority.NORMAL);
@@ -265,7 +256,7 @@ public class MetricsLite {
                     field.setInt(handle, handle.getModifiers() & ~Modifier.FINAL);
                     handle.setAccessible(true);
                     providers = ((Map<Class<?>, List<RegisteredServiceProvider<?>>>) handle.get((NKServiceManager) (Server.getInstance().getServiceManager()))).get(service);
-                } catch(IllegalAccessException | IllegalArgumentException | SecurityException e) {
+                } catch (IllegalAccessException | IllegalArgumentException | SecurityException e) {
                     // Something went wrong! :(
                     if (logFailedRequests) {
                         plugin.getLogger().warning("Failed to link to metrics class " + service.getName(), e);
@@ -279,10 +270,12 @@ public class MetricsLite {
                             if (plugin instanceof JsonObject) {
                                 pluginData.add((JsonElement) plugin);
                             }
-                        } catch (SecurityException | NoSuchMethodException | IllegalAccessException | IllegalArgumentException | InvocationTargetException ignored) { }
+                        } catch (SecurityException | NoSuchMethodException | IllegalAccessException | IllegalArgumentException | InvocationTargetException ignored) {
+                        }
                     }
                 }
-            } catch (NoSuchFieldException ignored) { }
+            } catch (NoSuchFieldException ignored) {
+            }
         });
 
         data.add("plugins", pluginData);
@@ -305,7 +298,7 @@ public class MetricsLite {
      * Sends the data to the bStats server.
      *
      * @param plugin Any plugin. It's just used to get a logger instance.
-     * @param data The data to send.
+     * @param data   The data to send.
      * @throws Exception If the request failed.
      */
     private static void sendData(Plugin plugin, JsonObject data) throws Exception {
