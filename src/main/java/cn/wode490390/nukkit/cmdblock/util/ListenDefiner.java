@@ -21,7 +21,10 @@ public class ListenDefiner {
         Map<String, String> argumentMap = new HashMap<>();
         for (String a : ARGUMENT_SEPARATOR.split(arguments)) {
             List<String> b = ARGUMENT_JOINER.splitToList(a);
-            argumentMap.put(b.get(0), b.get(1));
+            if (b.size() == 2)
+                argumentMap.put(b.get(0), b.get(1));
+            else
+                argumentMap.put(b.get(0),"");
         }
         return argumentMap;
     }

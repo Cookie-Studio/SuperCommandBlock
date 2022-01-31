@@ -305,9 +305,6 @@ public class BlockEntityCommandBlock extends BlockEntitySpawnable implements ICo
                         this.successCount = 1;
                     } else {
                         this.lastOutput = null;
-                        if (cmd.startsWith("/")) {
-                            cmd = cmd.substring(1);
-                        }
 
                         //run cmd
                         if (isScript) {
@@ -329,6 +326,9 @@ public class BlockEntityCommandBlock extends BlockEntitySpawnable implements ICo
                                 }
                             }
                         } else {
+                            while (cmd.startsWith("/") || cmd.startsWith("\n") || cmd.startsWith(" ")) {
+                                cmd = cmd.substring(1);
+                            }
                             if (Server.getInstance().dispatchCommand(this, cmd)) {
                                 this.successCount = 1; //TODO: >1
                             } else {
@@ -391,7 +391,10 @@ public class BlockEntityCommandBlock extends BlockEntitySpawnable implements ICo
             scriptEngine = (NashornScriptEngine) scriptEngineFactory.getScriptEngine(new String[]{"-doe"}, this.getClass().getClassLoader(), str -> true);
             initScriptEngine();
             if (listenMap.containsKey(this) && !listenMap.get(this).isEmpty()) {
-                listenMap.get(this).forEach((k, v) -> scriptEngine.put(v, null));//define value
+                listenMap.get(this).forEach((k, v) -> {
+                    if (!v.isEmpty())
+                        scriptEngine.put(v, null);
+                });//define value
             }
             String script = "function cmd(){" + command + "}";
             try {

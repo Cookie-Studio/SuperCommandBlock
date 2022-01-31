@@ -43,7 +43,7 @@ public class ProxyPluginManager extends PluginManager {
         for (BlockEntityCommandBlock cb : BlockEntityCommandBlock.getListenMap().keySet()) {
             ScriptEngine scriptEngine = cb.getScriptEngine();
             BlockEntityCommandBlock.getListenMap().get(cb).forEach((k, v) -> {
-                if (eventName.equals(k)) {
+                if (eventName.equals(k) && !v.isEmpty()) {
                     scriptEngine.put(v, event);
                     cb.execute();
                     scriptEngine.put(v, null);
