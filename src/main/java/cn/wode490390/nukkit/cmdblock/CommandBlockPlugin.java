@@ -22,8 +22,12 @@ import cn.wode490390.nukkit.cmdblock.blockentity.BlockEntityId;
 import cn.wode490390.nukkit.cmdblock.functionlib.Storage;
 import cn.wode490390.nukkit.cmdblock.protocol.CommandBlockUpdatePacket;
 
+import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 public class CommandBlockPlugin extends PluginBase implements Listener {
 
@@ -42,10 +46,7 @@ public class CommandBlockPlugin extends PluginBase implements Listener {
 //        } catch (Throwable ignore) {
 //
 //        }
-        this.saveResource("命令方块换行材质包.mcpack");
-        this.saveResource("globalScript.js");
-        this.saveResource("storage.yml");
-        this.getLogger().warning("§a建议您安装配套的命令方块换行材质包，方便写代码。材质包可在 §e/plugins/SuperCommandBlock/ §a目录找到");
+        this.copyResource();
         //init storage
         Storage.save();
         //packet
@@ -58,6 +59,18 @@ public class CommandBlockPlugin extends PluginBase implements Listener {
         BlockEntity.registerBlockEntity(BlockEntityId.COMMAND_BLOCK, BlockEntityCommandBlock.class);
         //listener
         this.getServer().getPluginManager().registerEvents(this, this);
+    }
+
+    private void copyResource(){
+        this.saveResource("globalScript.js");
+        this.saveResource("storage.yml");
+        Path p = Paths.get(Server.getInstance().getDataPath() + "resource_packs/命令方块换行材质包.mcpack");
+        if (!Files.exists(p)){
+            this.getLogger().warning("未在目录" + p.toString() + "下找到材质包，正在复制，请在完成后重启服务器应用更改");
+            try {
+                Files.copy(this.getClass().getClassLoader().getResourceAsStream("命令方块换行材质包.mcpack"),p);
+            } catch (IOException e) { e.printStackTrace(); }
+        }
     }
 
     @Override
